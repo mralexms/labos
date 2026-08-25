@@ -28,6 +28,12 @@ ISO_NAME="debian-${DEBIAN_VERSION}-${DEBIAN_ARCH}-netinst.iso"
 ISO_URL="https://cdimage.debian.org/cdimage/archive/${DEBIAN_VERSION}/${DEBIAN_ARCH}/iso-cd/${ISO_NAME}"
 CHECKSUM_URL="https://cdimage.debian.org/cdimage/archive/${DEBIAN_VERSION}/${DEBIAN_ARCH}/iso-cd/SHA256SUMS"
 
+# Logisim Evolution nao e empacotado no Debian - o projeto publica um .deb
+# self-contained (com JRE embutido) nas releases do GitHub.
+LOGISIM_VERSION="4.1.0"
+LOGISIM_DEB="logisim-evolution_${LOGISIM_VERSION}_amd64.deb"
+LOGISIM_URL="https://github.com/logisim-evolution/logisim-evolution/releases/download/v${LOGISIM_VERSION}/${LOGISIM_DEB}"
+
 WORKDIR="$(pwd)/iso-build"
 EXTRACT_DIR="${WORKDIR}/extracted"
 OUTPUT_ISO="$(pwd)/debian-ad-lab-custom.iso"
@@ -100,10 +106,20 @@ extract_iso() {
     log "OK - ISO extraida em $EXTRACT_DIR"
 }
 
+download_logisim_if_needed() {
+    if [[ -f "$LOGISIM_DEB" ]]; then
+        log "Logisim Evolution .deb ja existe localmente ($LOGISIM_DEB). Pulando download."
+    else
+        log "Baixando Logisim Evolution ${LOGISIM_VERSION} (.deb, nao empacotado no Debian)..."
+        wget -c "$LOGISIM_URL" -O "$LOGISIM_DEB" || err "Falha ao baixar o Logisim Evolution. Verifique a URL/versao: $LOGISIM_URL"
+    fi
+}
+
 embed_files() {
-    log "Copiando preseed.cfg e join-ad.sh para a raiz da ISO..."
+    log "Copiando preseed.cfg, join-ad.sh e logisim-evolution.deb para a raiz da ISO..."
     cp "$PRESEED_FILE" "$EXTRACT_DIR/preseed.cfg"
     cp "$JOINAD_FILE"  "$EXTRACT_DIR/join-ad.sh"
+    cp "$LOGISIM_DEB"  "$EXTRACT_DIR/logisim-evolution.deb"
     log "OK."
 }
 
@@ -210,6 +226,7 @@ cd "$(pwd)"
 check_dependencies
 check_input_files
 download_iso_if_needed
+download_logisim_if_needed
 extract_iso
 embed_files
 patch_boot_menus
