@@ -1,0 +1,7 @@
+output/
+iso-build/
+*.iso
+.DS_Store
+.git
+.claude
+README.md
