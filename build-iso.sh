@@ -135,7 +135,7 @@ patch_boot_menus() {
 label auto-preseed
     menu label ^Instalacao automatizada (AD Lab - preseed)
     kernel /install.amd/vmlinuz
-    append vga=788 initrd=/install.amd/initrd.gz auto=true priority=medium rootdelay=10 file=/cdrom/preseed.cfg ---
+    append vga=788 initrd=/install.amd/initrd.gz auto=true priority=high rootdelay=10 file=/cdrom/preseed.cfg ---
 EOF
             log "OK - entrada BIOS/isolinux adicionada (label: auto-preseed)."
         else
@@ -153,7 +153,7 @@ EOF
 
 menuentry 'Instalacao automatizada (AD Lab - preseed)' {
     set background_color=black
-    linux    /install.amd/vmlinuz vga=788 auto=true priority=medium rootdelay=10 file=/cdrom/preseed.cfg ---
+    linux    /install.amd/vmlinuz vga=788 auto=true priority=high rootdelay=10 file=/cdrom/preseed.cfg ---
     initrd   /install.amd/initrd.gz
 }
 EOF
