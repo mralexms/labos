@@ -107,31 +107,6 @@ embed_files() {
     log "OK."
 }
 
-patch_preseed_late_command() {
-    # Garante que o join-ad.sh embutido na ISO seja copiado para dentro do
-    # sistema instalado, em /usr/local/sbin, ja com permissao de execucao,
-    # para o administrador rodar manualmente depois do primeiro boot.
-    local target_preseed="$EXTRACT_DIR/preseed.cfg"
-    local marker="cp /cdrom/join-ad.sh"
-
-    if grep -q "$marker" "$target_preseed"; then
-        log "late_command ja copia o join-ad.sh - nada a fazer."
-        return
-    fi
-
-    log "Ajustando preseed embutido para instalar o join-ad.sh no sistema final..."
-    # Adiciona mais uma linha ao final do late_command existente.
-    # Isso pressupoe que a ultima linha do late_command termina sem ';' final solto -
-    # inserimos uma continuacao segura como nova linha do bloco late_command.
-    sed -i '/^d-i preseed\/late_command string/,/^[^ \\]/ {
-        /in-target .bin.bash -c "printf .\\\\n# Abrir kitty/ {
-            s/$/ \\\\/
-            a\    cp /cdrom/join-ad.sh /target/usr/local/sbin/join-ad.sh; in-target chmod +x /usr/local/sbin/join-ad.sh
-        }
-    }' "$target_preseed" || log "AVISO: nao foi possivel ajustar automaticamente o late_command. Adicione manualmente a linha:
-    cp /cdrom/join-ad.sh /target/usr/local/sbin/join-ad.sh; in-target chmod +x /usr/local/sbin/join-ad.sh"
-}
-
 patch_boot_menus() {
     log "Ajustando menus de boot para oferecer instalacao automatizada com preseed..."
 
@@ -237,7 +212,6 @@ check_input_files
 download_iso_if_needed
 extract_iso
 embed_files
-patch_preseed_late_command
 patch_boot_menus
 regenerate_checksums
 rebuild_iso
