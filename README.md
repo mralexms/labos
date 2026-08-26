@@ -22,10 +22,34 @@ para dentro da imagem:
 - `preseed.cfg`
 - `join-ad.sh`
 
-Se voce editar qualquer um deles (por exemplo, ajustar senhas no
-`preseed.cfg` ou o dominio no `join-ad.sh`), **reconstrua a imagem**
-antes de rodar novamente (passo 1 abaixo) para que as mudancas sejam
-incluidas.
+Se voce editar qualquer um deles, **reconstrua a imagem** antes de rodar
+novamente (passo 1 abaixo) para que as mudancas sejam incluidas.
+
+## 0. Configurar segredos (.env)
+
+`preseed.cfg` e `join-ad.sh` sao templates - a senha de root/suporte e os
+dados do Active Directory (dominio, usuario admin) NAO ficam hardcoded
+neles (o repositorio e publico). Em vez disso, ficam como placeholders
+(`__ROOT_PASSWORD__`, `__AD_DOMAIN__`, etc.) substituidos em tempo de
+build a partir de um arquivo `.env` local, que nunca e commitado.
+
+```bash
+cp .env.example .env
+```
+
+Edite o `.env` com os valores reais:
+
+```
+ROOT_PASSWORD=uma-senha-forte-aqui
+SUPORTE_PASSWORD=outra-senha-forte-aqui
+AD_DOMAIN=seudominio.local
+AD_ADMIN_USER=admin_user
+AD_ALLOWED_GROUP=
+```
+
+Se o `.env` nao existir, o build ainda funciona (usa os placeholders
+`TROQUE_ESSA_SENHA` / `seudominio.local` como antes), mas com um aviso -
+nao gere uma ISO para uso real sem configurar o `.env` primeiro.
 
 ## 1. Build da imagem
 
@@ -55,8 +79,12 @@ mkdir -p output
 
 docker run --rm \
   -v "$(pwd)/output:/output" \
+  -v "$(pwd)/.env:/app/.env:ro" \
   labiso-builder
 ```
+
+(omita a segunda linha `-v` se ainda nao tiver criado o `.env` - o build
+usa os placeholders padrao e avisa no log.)
 
 O processo:
 

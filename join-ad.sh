@@ -16,9 +16,9 @@ set -euo pipefail
 # ================================
 # CONFIGURACOES - AJUSTE AQUI
 # ================================
-DOMAIN="seudominio.local"          # Dominio AD (FQDN)
-AD_ADMIN="admin_user"              # Usuario do AD com permissao de join
-ALLOWED_GROUP=""                   # Opcional: ex "Linux-Users" para restringir login SSH/local a um grupo do AD. Deixe vazio para permitir todos os usuarios do dominio.
+DOMAIN="__AD_DOMAIN__"             # Dominio AD (FQDN)
+AD_ADMIN="__AD_ADMIN_USER__"       # Usuario do AD com permissao de join
+ALLOWED_GROUP="__AD_ALLOWED_GROUP__"  # Opcional: ex "Linux-Users" para restringir login SSH/local a um grupo do AD. Deixe vazio para permitir todos os usuarios do dominio.
 
 # ================================
 # Checagens antes de comecar

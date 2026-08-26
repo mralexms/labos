@@ -40,6 +40,7 @@ OUTPUT_ISO="$(pwd)/debian-ad-lab-custom.iso"
 
 PRESEED_FILE="$(pwd)/preseed.cfg"
 JOINAD_FILE="$(pwd)/join-ad.sh"
+ENV_FILE="$(pwd)/.env"
 
 # ================================
 # Funcoes auxiliares
@@ -64,6 +65,36 @@ check_input_files() {
     [[ -f "$PRESEED_FILE" ]] || err "preseed.cfg nao encontrado em $(pwd). Gere-o antes de rodar este script."
     [[ -f "$JOINAD_FILE"  ]] || err "join-ad.sh nao encontrado em $(pwd). Gere-o antes de rodar este script."
     log "OK - preseed.cfg e join-ad.sh encontrados."
+}
+
+# preseed.cfg e join-ad.sh sao templates com placeholders (__ROOT_PASSWORD__,
+# __AD_DOMAIN__, etc.) para nao deixar senha/dominio do AD hardcoded no
+# repositorio (que e publico). Os valores reais vem do .env (nao versionado).
+load_env() {
+    # Defaults so o script nao quebra pra quem ainda nao criou o .env -
+    # NAO use esses valores em producao, copie .env.example para .env e ajuste.
+    ROOT_PASSWORD="TROQUE_ESSA_SENHA"
+    SUPORTE_PASSWORD="TROQUE_ESSA_SENHA"
+    AD_DOMAIN="seudominio.local"
+    AD_ADMIN_USER="admin_user"
+    AD_ALLOWED_GROUP=""
+
+    if [[ -f "$ENV_FILE" ]]; then
+        log "Carregando segredos de $ENV_FILE..."
+        set -a
+        # shellcheck disable=SC1090
+        source "$ENV_FILE"
+        set +a
+    else
+        log "AVISO: $ENV_FILE nao encontrado - usando valores placeholder padrao."
+        log "         Copie .env.example para .env e ajuste ROOT_PASSWORD, SUPORTE_PASSWORD,"
+        log "         AD_DOMAIN e AD_ADMIN_USER antes de gerar uma ISO para uso real."
+    fi
+}
+
+# Escapa \, / e & para uso seguro do lado direito de um sed 's/.../.../'.
+sed_escape_replacement() {
+    printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/[\/&]/\\&/g'
 }
 
 download_iso_if_needed() {
@@ -116,10 +147,29 @@ download_logisim_if_needed() {
 }
 
 embed_files() {
-    log "Copiando preseed.cfg, join-ad.sh e logisim-evolution.deb para a raiz da ISO..."
-    cp "$PRESEED_FILE" "$EXTRACT_DIR/preseed.cfg"
-    cp "$JOINAD_FILE"  "$EXTRACT_DIR/join-ad.sh"
-    cp "$LOGISIM_DEB"  "$EXTRACT_DIR/logisim-evolution.deb"
+    log "Copiando preseed.cfg e join-ad.sh para a raiz da ISO (substituindo segredos do .env)..."
+
+    local root_pw suporte_pw ad_domain ad_admin ad_group
+    root_pw=$(sed_escape_replacement "$ROOT_PASSWORD")
+    suporte_pw=$(sed_escape_replacement "$SUPORTE_PASSWORD")
+    ad_domain=$(sed_escape_replacement "$AD_DOMAIN")
+    ad_admin=$(sed_escape_replacement "$AD_ADMIN_USER")
+    ad_group=$(sed_escape_replacement "$AD_ALLOWED_GROUP")
+
+    sed \
+        -e "s/__ROOT_PASSWORD__/${root_pw}/g" \
+        -e "s/__SUPORTE_PASSWORD__/${suporte_pw}/g" \
+        -e "s/__AD_DOMAIN__/${ad_domain}/g" \
+        "$PRESEED_FILE" > "$EXTRACT_DIR/preseed.cfg"
+
+    sed \
+        -e "s/__AD_DOMAIN__/${ad_domain}/g" \
+        -e "s/__AD_ADMIN_USER__/${ad_admin}/g" \
+        -e "s/__AD_ALLOWED_GROUP__/${ad_group}/g" \
+        "$JOINAD_FILE" > "$EXTRACT_DIR/join-ad.sh"
+
+    log "Copiando logisim-evolution.deb para a raiz da ISO..."
+    cp "$LOGISIM_DEB" "$EXTRACT_DIR/logisim-evolution.deb"
     log "OK."
 }
 
@@ -225,6 +275,7 @@ cd "$(pwd)"
 
 check_dependencies
 check_input_files
+load_env
 download_iso_if_needed
 download_logisim_if_needed
 extract_iso
