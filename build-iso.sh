@@ -40,6 +40,7 @@ OUTPUT_ISO="$(pwd)/debian-ad-lab-custom.iso"
 
 PRESEED_FILE="$(pwd)/preseed.cfg"
 JOINAD_FILE="$(pwd)/join-ad.sh"
+INSTALLEXTRA_FILE="$(pwd)/install-extra.sh"
 ENV_FILE="$(pwd)/.env"
 
 # ================================
@@ -64,7 +65,8 @@ Instale com: sudo apt install wget xorriso libarchive-tools rsync coreutils"
 check_input_files() {
     [[ -f "$PRESEED_FILE" ]] || err "preseed.cfg nao encontrado em $(pwd). Gere-o antes de rodar este script."
     [[ -f "$JOINAD_FILE"  ]] || err "join-ad.sh nao encontrado em $(pwd). Gere-o antes de rodar este script."
-    log "OK - preseed.cfg e join-ad.sh encontrados."
+    [[ -f "$INSTALLEXTRA_FILE" ]] || err "install-extra.sh nao encontrado em $(pwd). Gere-o antes de rodar este script."
+    log "OK - preseed.cfg, join-ad.sh e install-extra.sh encontrados."
 }
 
 # preseed.cfg e join-ad.sh sao templates com placeholders (__ROOT_PASSWORD__,
@@ -187,7 +189,8 @@ embed_files() {
         -e "s/__AD_ALLOWED_GROUP__/${ad_group}/g" \
         "$JOINAD_FILE" > "$EXTRACT_DIR/join-ad.sh"
 
-    log "Copiando logisim-evolution.deb para a raiz da ISO..."
+    log "Copiando install-extra.sh e logisim-evolution.deb para a raiz da ISO..."
+    cp "$INSTALLEXTRA_FILE" "$EXTRACT_DIR/install-extra.sh"
     cp "$LOGISIM_DEB" "$EXTRACT_DIR/logisim-evolution.deb"
     log "OK."
 }
@@ -310,5 +313,6 @@ echo "  1. Grave a ISO em um pendrive:"
 echo "       sudo dd if='$OUTPUT_ISO' of=/dev/sdX bs=4M status=progress conv=fsync"
 echo "     (confira o device certo com 'lsblk' antes - dd apaga o destino sem aviso)"
 echo "  2. No boot, escolha a entrada 'Instalacao automatizada (AD Lab - preseed)'"
-echo "  3. Apos a instalacao, o join-ad.sh estara em /usr/local/sbin/join-ad.sh"
-echo "     pronto para o administrador executar manualmente com sudo."
+echo "  3. Apos a instalacao, o join-ad.sh e o install-extra.sh estarao em"
+echo "     /usr/local/sbin/, prontos para o administrador executar manualmente"
+echo "     com sudo."
