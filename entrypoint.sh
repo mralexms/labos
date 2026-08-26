@@ -15,7 +15,7 @@ set -euo pipefail
 mkdir -p /output
 cd /output
 
-cp -f /app/build-iso.sh /app/preseed.cfg /app/join-ad.sh .
+cp -f /app/build-iso.sh /app/preseed.cfg /app/join-ad.sh /app/install-extra.sh .
 
 # .env (senhas/dados do AD) e opcional e NAO faz parte da imagem - so entra
 # se o host montar o arquivo em /app/.env (ver README.md).

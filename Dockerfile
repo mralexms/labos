@@ -40,8 +40,8 @@ RUN (getent group "${GROUP_ID}" > /dev/null || groupadd -g "${GROUP_ID}" builder
     && useradd -m -u "${USER_ID}" -g "${GROUP_ID}" -o -s /bin/bash builder
 
 WORKDIR /app
-COPY --chown=${USER_ID}:${GROUP_ID} build-iso.sh preseed.cfg join-ad.sh entrypoint.sh /app/
-RUN chmod +x /app/build-iso.sh /app/join-ad.sh /app/entrypoint.sh
+COPY --chown=${USER_ID}:${GROUP_ID} build-iso.sh preseed.cfg join-ad.sh install-extra.sh entrypoint.sh /app/
+RUN chmod +x /app/build-iso.sh /app/join-ad.sh /app/install-extra.sh /app/entrypoint.sh
 
 # Pasta onde a ISO final (e os artefatos intermediarios: ISO netinst
 # baixada e a pasta iso-build/) sera escrita. Mapeie-a como volume para
