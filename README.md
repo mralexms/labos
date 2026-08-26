@@ -21,6 +21,7 @@ para dentro da imagem:
 - `build-iso.sh`
 - `preseed.cfg`
 - `join-ad.sh`
+- `install-extra.sh`
 
 Se voce editar qualquer um deles, **reconstrua a imagem** antes de rodar
 novamente (passo 1 abaixo) para que as mudancas sejam incluidas.
@@ -84,6 +85,17 @@ docker run --rm \
   -v "$(pwd)/output:/output" \
   -v "$(pwd)/.env:/app/.env:ro" \
   labiso-builder
+```
+
+### Windows
+
+Em vez dos passos 1 e 2, rode `build.bat` (duplo-clique ou via `cmd`/
+PowerShell, na raiz do projeto) - ele faz o `docker build` e o
+`docker run` com os volumes corretos, detectando automaticamente se
+existe um `.env`:
+
+```
+build.bat
 ```
 
 (omita a segunda linha `-v` se ainda nao tiver criado o `.env` - o build
