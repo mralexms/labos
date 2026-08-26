@@ -240,6 +240,20 @@ rebuild_iso() {
 
     [[ -f "$EXTRACT_DIR/$isolinux_bin" ]] || err "Nao encontrei $isolinux_bin dentro da ISO extraida. Verifique o layout da versao do Debian usada."
 
+    # A ISO netinst original do Debian ja e "isohybrid" (bootavel tanto como
+    # CD quanto via dd/Balena Etcher direto num pendrive), mas isso depende
+    # de um cabecalho MBR especial nos primeiros bytes do arquivo. Remontar
+    # com xorriso do zero NAO preserva esse cabecalho automaticamente - sem
+    # ele, a ISO final continua bootavel como CD (por isso os testes via
+    # QEMU -cdrom nunca pegaram isso), mas ferramentas como o Balena Etcher
+    # recusam gravar em pendrive por nao reconhecerem uma imagem hibrida.
+    # Extraimos o cabecalho (432 bytes) direto da ISO netinst original, que
+    # ja o tem correto, em vez de depender do pacote isolinux so por causa
+    # do isohdpfx.bin.
+    local isohybrid_mbr="${WORKDIR}/isohybrid-mbr.bin"
+    dd if="$ISO_NAME" bs=1 count=432 of="$isohybrid_mbr" status=none \
+        || err "Falha ao extrair o cabecalho isohybrid da ISO netinst original."
+
     local efi_args=()
     if [[ -f "$EXTRACT_DIR/$efi_img" ]]; then
         efi_args=(
@@ -259,6 +273,7 @@ rebuild_iso() {
         -b "$isolinux_bin" \
         -c "$boot_cat" \
         -no-emul-boot -boot-load-size 4 -boot-info-table \
+        -isohybrid-mbr "$isohybrid_mbr" \
         "${efi_args[@]}" \
         "$EXTRACT_DIR" \
         || err "xorriso falhou ao gerar a ISO final."
