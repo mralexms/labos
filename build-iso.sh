@@ -90,6 +90,25 @@ load_env() {
         log "         Copie .env.example para .env e ajuste ROOT_PASSWORD, SUPORTE_PASSWORD,"
         log "         AD_DOMAIN e AD_ADMIN_USER antes de gerar uma ISO para uso real."
     fi
+
+    # Se o .env existir mas deixar AD_DOMAIN/AD_ADMIN_USER vazios, pergunta
+    # interativamente em vez de seguir com um valor em branco.
+    prompt_if_empty AD_DOMAIN "Dominio do Active Directory (FQDN, ex: seudominio.local)"
+    prompt_if_empty AD_ADMIN_USER "Usuario do AD com permissao de join no dominio"
+}
+
+# Pergunta interativamente por $1 (nome da variavel) se ela estiver vazia,
+# usando $2 como texto do prompt. Requer stdin interativo (docker run -i).
+prompt_if_empty() {
+    local var_name="$1" prompt_text="$2" current_value
+    current_value="${!var_name}"
+
+    while [[ -z "$current_value" ]]; do
+        read -r -p "[build-iso] ${prompt_text}: " current_value || \
+            err "$var_name esta vazio e nao ha entrada interativa disponivel (rode o docker com -i)."
+    done
+
+    printf -v "$var_name" '%s' "$current_value"
 }
 
 # Escapa \, / e & para uso seguro do lado direito de um sed 's/.../.../'.

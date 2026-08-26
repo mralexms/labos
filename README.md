@@ -77,11 +77,15 @@ para `/output` dentro do container - e la que a ISO final sera escrita:
 ```bash
 mkdir -p output
 
-docker run --rm \
+docker run --rm -i \
   -v "$(pwd)/output:/output" \
   -v "$(pwd)/.env:/app/.env:ro" \
   labiso-builder
 ```
+
+O `-i` e necessario porque, se `AD_DOMAIN` ou `AD_ADMIN_USER` ficarem
+vazios no `.env`, o script pergunta interativamente pelo valor em vez de
+seguir com um dominio/usuario em branco.
 
 (omita a segunda linha `-v` se ainda nao tiver criado o `.env` - o build
 usa os placeholders padrao e avisa no log.)
