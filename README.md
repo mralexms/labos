@@ -27,11 +27,15 @@ novamente (passo 1 abaixo) para que as mudancas sejam incluidas.
 
 ## 0. Configurar segredos (.env)
 
-`preseed.cfg` e `join-ad.sh` sao templates - a senha de root/suporte e os
-dados do Active Directory (dominio, usuario admin) NAO ficam hardcoded
-neles (o repositorio e publico). Em vez disso, ficam como placeholders
-(`__ROOT_PASSWORD__`, `__AD_DOMAIN__`, etc.) substituidos em tempo de
-build a partir de um arquivo `.env` local, que nunca e commitado.
+`preseed.cfg` e `join-ad.sh` sao templates - a senha de root/suporte NAO
+fica hardcoded neles (o repositorio e publico). Em vez disso, fica como
+placeholder (`__ROOT_PASSWORD__`, `__SUPORTE_PASSWORD__`) substituido em
+tempo de build a partir de um arquivo `.env` local, que nunca e commitado.
+
+O dominio e o usuario admin do AD **nao** ficam no `.env` - o
+`join-ad.sh` pergunta os dois interativamente na hora que o administrador
+roda o script na maquina instalada, entao nao existem em texto puro em
+lugar nenhum do build.
 
 ```bash
 cp .env.example .env
@@ -43,7 +47,6 @@ Edite o `.env` com os valores reais:
 ROOT_PASSWORD=uma-senha-forte-aqui
 SUPORTE_PASSWORD=outra-senha-forte-aqui
 AD_DOMAIN=seudominio.local
-AD_ADMIN_USER=admin_user
 AD_ALLOWED_GROUP=
 ```
 
@@ -77,15 +80,11 @@ para `/output` dentro do container - e la que a ISO final sera escrita:
 ```bash
 mkdir -p output
 
-docker run --rm -i \
+docker run --rm \
   -v "$(pwd)/output:/output" \
   -v "$(pwd)/.env:/app/.env:ro" \
   labiso-builder
 ```
-
-O `-i` e necessario porque, se `AD_DOMAIN` ou `AD_ADMIN_USER` ficarem
-vazios no `.env`, o script pergunta interativamente pelo valor em vez de
-seguir com um dominio/usuario em branco.
 
 (omita a segunda linha `-v` se ainda nao tiver criado o `.env` - o build
 usa os placeholders padrao e avisa no log.)

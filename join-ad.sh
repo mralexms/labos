@@ -14,11 +14,11 @@
 set -euo pipefail
 
 # ================================
-# CONFIGURACOES - AJUSTE AQUI
+# CONFIGURACOES
 # ================================
-DOMAIN="__AD_DOMAIN__"             # Dominio AD (FQDN)
-AD_ADMIN="__AD_ADMIN_USER__"       # Usuario do AD com permissao de join
-ALLOWED_GROUP="__AD_ALLOWED_GROUP__"  # Opcional: ex "Linux-Users" para restringir login SSH/local a um grupo do AD. Deixe vazio para permitir todos os usuarios do dominio.
+# Opcional: ex "Linux-Users" para restringir login SSH/local a um grupo do
+# AD. Deixe vazio para permitir todos os usuarios do dominio.
+ALLOWED_GROUP="__AD_ALLOWED_GROUP__"
 
 # ================================
 # Checagens antes de comecar
@@ -29,7 +29,17 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 echo "=== Join no Active Directory ==="
-echo "Dominio alvo: $DOMAIN"
+echo
+
+read -r -p "Dominio do Active Directory (FQDN, ex: seudominio.local): " DOMAIN
+while [[ -z "$DOMAIN" ]]; do
+    read -r -p "Dominio nao pode ser vazio. Dominio do Active Directory (FQDN): " DOMAIN
+done
+
+read -r -p "Usuario do AD com permissao de join no dominio: " AD_ADMIN
+while [[ -z "$AD_ADMIN" ]]; do
+    read -r -p "Usuario nao pode ser vazio. Usuario do AD com permissao de join: " AD_ADMIN
+done
 echo
 
 echo "[1/7] Verificando conectividade e DNS do dominio..."

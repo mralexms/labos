@@ -78,7 +78,6 @@ load_env() {
     ROOT_PASSWORD="TROQUE_ESSA_SENHA"
     SUPORTE_PASSWORD="TROQUE_ESSA_SENHA"
     AD_DOMAIN="seudominio.local"
-    AD_ADMIN_USER="admin_user"
     AD_ALLOWED_GROUP=""
 
     if [[ -f "$ENV_FILE" ]]; then
@@ -89,28 +88,9 @@ load_env() {
         set +a
     else
         log "AVISO: $ENV_FILE nao encontrado - usando valores placeholder padrao."
-        log "         Copie .env.example para .env e ajuste ROOT_PASSWORD, SUPORTE_PASSWORD,"
-        log "         AD_DOMAIN e AD_ADMIN_USER antes de gerar uma ISO para uso real."
+        log "         Copie .env.example para .env e ajuste ROOT_PASSWORD e SUPORTE_PASSWORD"
+        log "         antes de gerar uma ISO para uso real."
     fi
-
-    # Se o .env existir mas deixar AD_DOMAIN/AD_ADMIN_USER vazios, pergunta
-    # interativamente em vez de seguir com um valor em branco.
-    prompt_if_empty AD_DOMAIN "Dominio do Active Directory (FQDN, ex: seudominio.local)"
-    prompt_if_empty AD_ADMIN_USER "Usuario do AD com permissao de join no dominio"
-}
-
-# Pergunta interativamente por $1 (nome da variavel) se ela estiver vazia,
-# usando $2 como texto do prompt. Requer stdin interativo (docker run -i).
-prompt_if_empty() {
-    local var_name="$1" prompt_text="$2" current_value
-    current_value="${!var_name}"
-
-    while [[ -z "$current_value" ]]; do
-        read -r -p "[build-iso] ${prompt_text}: " current_value || \
-            err "$var_name esta vazio e nao ha entrada interativa disponivel (rode o docker com -i)."
-    done
-
-    printf -v "$var_name" '%s' "$current_value"
 }
 
 # Escapa \, / e & para uso seguro do lado direito de um sed 's/.../.../'.
@@ -170,11 +150,10 @@ download_logisim_if_needed() {
 embed_files() {
     log "Copiando preseed.cfg e join-ad.sh para a raiz da ISO (substituindo segredos do .env)..."
 
-    local root_pw suporte_pw ad_domain ad_admin ad_group
+    local root_pw suporte_pw ad_domain ad_group
     root_pw=$(sed_escape_replacement "$ROOT_PASSWORD")
     suporte_pw=$(sed_escape_replacement "$SUPORTE_PASSWORD")
     ad_domain=$(sed_escape_replacement "$AD_DOMAIN")
-    ad_admin=$(sed_escape_replacement "$AD_ADMIN_USER")
     ad_group=$(sed_escape_replacement "$AD_ALLOWED_GROUP")
 
     sed \
@@ -184,8 +163,6 @@ embed_files() {
         "$PRESEED_FILE" > "$EXTRACT_DIR/preseed.cfg"
 
     sed \
-        -e "s/__AD_DOMAIN__/${ad_domain}/g" \
-        -e "s/__AD_ADMIN_USER__/${ad_admin}/g" \
         -e "s/__AD_ALLOWED_GROUP__/${ad_group}/g" \
         "$JOINAD_FILE" > "$EXTRACT_DIR/join-ad.sh"
 
