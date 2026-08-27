@@ -77,6 +77,7 @@ load_env() {
     # NAO use esses valores em producao, copie .env.example para .env e ajuste.
     ROOT_PASSWORD="TROQUE_ESSA_SENHA"
     SUPORTE_PASSWORD="TROQUE_ESSA_SENHA"
+    ALUNO_PASSWORD="TROQUE_ESSA_SENHA"
     AD_DOMAIN="seudominio.local"
     AD_ALLOWED_GROUP=""
 
@@ -150,15 +151,25 @@ download_logisim_if_needed() {
 embed_files() {
     log "Copiando preseed.cfg e join-ad.sh para a raiz da ISO (substituindo segredos do .env)..."
 
-    local root_pw suporte_pw ad_domain ad_group
+    local root_pw suporte_pw ad_domain ad_group aluno_pw_hash
     root_pw=$(sed_escape_replacement "$ROOT_PASSWORD")
     suporte_pw=$(sed_escape_replacement "$SUPORTE_PASSWORD")
     ad_domain=$(sed_escape_replacement "$AD_DOMAIN")
     ad_group=$(sed_escape_replacement "$AD_ALLOWED_GROUP")
 
+    # O usuario "aluno" e criado via late_command (useradd + usermod -p), nao
+    # via debconf, entao a senha dele precisa ir ja hasheada (SHA-512 crypt):
+    # embutir a senha em texto puro dentro de um "in-target bash -c '...'"
+    # exigiria escapar aspas/$/etc de forma segura contra shell injection, e
+    # um hash gerado com openssl so contem [A-Za-z0-9./$], seguro dentro de
+    # aspas simples sem escaping nenhum.
+    aluno_pw_hash=$(openssl passwd -6 "$ALUNO_PASSWORD")
+    aluno_pw_hash=$(sed_escape_replacement "$aluno_pw_hash")
+
     sed \
         -e "s/__ROOT_PASSWORD__/${root_pw}/g" \
         -e "s/__SUPORTE_PASSWORD__/${suporte_pw}/g" \
+        -e "s/__ALUNO_PASSWORD_HASH__/${aluno_pw_hash}/g" \
         -e "s/__AD_DOMAIN__/${ad_domain}/g" \
         "$PRESEED_FILE" > "$EXTRACT_DIR/preseed.cfg"
 

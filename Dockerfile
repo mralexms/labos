@@ -21,6 +21,7 @@ ARG GROUP_ID=1000
 #   rsync            -> citado nas dependencias do script
 #   coreutils        -> sha256sum/md5sum (checagem de integridade)
 #   ca-certificates  -> necessario para o wget baixar via https
+#   openssl          -> gera o hash da senha do usuario "aluno" (openssl passwd -6)
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         wget \
@@ -29,6 +30,7 @@ RUN apt-get update && \
         rsync \
         coreutils \
         ca-certificates \
+        openssl \
     && rm -rf /var/lib/apt/lists/*
 
 # Usuario nao-root, para os arquivos gerados na pasta mapeada "output"
