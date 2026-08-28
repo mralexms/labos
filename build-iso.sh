@@ -95,8 +95,17 @@ load_env() {
 }
 
 # Escapa \, / e & para uso seguro do lado direito de um sed 's/.../.../'.
+# Delimitador "#" na segunda expressao (em vez de "/"): com "/" como
+# delimitador, o colchete "[\/&]" acaba incluindo a propria barra invertida
+# como um terceiro caractere literal da classe (o "\" antes do "/" nao e
+# um escape dentro de colchetes, so evita que o "/" feche o comando "s"
+# prematuramente) - isso escapava CADA backslash já duplicado pela primeira
+# expressao de novo, quadruplicando em vez de dobrar. So importava quando
+# o valor substituido ja continha "\" (ex: hash de senha com "\$" escapado
+# para sobreviver ao late_command) - ROOT_PASSWORD/SUPORTE_PASSWORD nunca
+# expuseram isso por nao terem backslash.
 sed_escape_replacement() {
-    printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/[\/&]/\\&/g'
+    printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's#[/&]#\\&#g'
 }
 
 download_iso_if_needed() {
@@ -164,6 +173,14 @@ embed_files() {
     # um hash gerado com openssl so contem [A-Za-z0-9./$], seguro dentro de
     # aspas simples sem escaping nenhum.
     aluno_pw_hash=$(openssl passwd -6 "$ALUNO_PASSWORD")
+    # A linha "usermod -p '...'" fica dentro de um "in-target bash -c "...""
+    # do late_command, que por sua vez e executado inteiro como UM "sh -c"
+    # pelo installer (mesmo motivo do "\$mod" no i3 config mais abaixo neste
+    # arquivo): sem escapar, esse sh externo expande "$6", "$EKr2..." etc
+    # como variaveis (vazias) ANTES do bash -c interno rodar, truncando o
+    # hash e quebrando a senha. Escapa cada "$" como "\$" para chegar
+    # literal no usermod.
+    aluno_pw_hash=$(printf '%s' "$aluno_pw_hash" | sed -e 's/\$/\\$/g')
     aluno_pw_hash=$(sed_escape_replacement "$aluno_pw_hash")
 
     sed \
